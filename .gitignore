@@ -1,0 +1,14 @@
+# Hide prompt file
+claudeprompt.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+.vscode/
+
+# Node modules (for optional server)
+node_modules/

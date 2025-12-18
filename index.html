@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VidFlow - A premium video player with background music reduction">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>VidFlow - Video Player with Music Reduction</title>
+  
+  <!-- Preload critical fonts from CDN -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/logo.svg">
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Header -->
+    <header class="header" role="banner">
+      <a href="#/" class="logo" aria-label="VidFlow Home">
+        <svg class="logo-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <defs>
+            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:var(--accent-primary)"/>
+              <stop offset="100%" style="stop-color:var(--accent-secondary)"/>
+            </linearGradient>
+          </defs>
+          <circle cx="16" cy="16" r="15" fill="url(#logoGrad)"/>
+          <polygon points="12,10 12,22 24,16" fill="var(--bg-primary)"/>
+        </svg>
+        <span class="logo-text">VidFlow</span>
+      </a>
+      
+      <div class="header-actions">
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme">
+          <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main" role="main">
+      <!-- Home View -->
+      <section id="home-view" class="view home-view">
+        <div class="hero">
+          <div class="hero-content">
+            <h1 class="hero-title">
+              <span class="hero-title-line">Your Videos,</span>
+              <span class="hero-title-line hero-title-accent">Enhanced</span>
+            </h1>
+            <p class="hero-subtitle">Upload your videos and reduce background music with our browser-based audio processing. No uploads to servers - everything happens locally.</p>
+          </div>
+          
+          <div class="upload-zone" id="upload-zone" role="region" aria-label="Video upload area">
+            <div class="upload-zone-inner" tabindex="0" role="button" aria-describedby="upload-hint">
+              <div class="upload-icon-wrapper">
+                <svg class="upload-icon" viewBox="0 0 64 64" aria-hidden="true">
+                  <rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                  <polygon points="32,24 24,36 40,36" fill="currentColor"/>
+                  <rect x="28" y="34" width="8" height="8" fill="currentColor"/>
+                </svg>
+              </div>
+              <p class="upload-text">Drop your video here or click to browse</p>
+              <p class="upload-hint" id="upload-hint">Supports MP4, WebM, OGG • Max recommended: 2GB</p>
+              <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg" hidden aria-label="Select video file">
+            </div>
+            
+            <div class="upload-divider">
+              <span>or paste a direct video URL</span>
+            </div>
+            
+            <div class="url-input-wrapper">
+              <input 
+                type="url" 
+                id="url-input" 
+                class="url-input" 
+                placeholder="https://example.com/video.mp4"
+                aria-label="Direct video URL"
+              >
+              <button id="url-submit" class="btn btn-primary" disabled aria-label="Load video from URL">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+            <p class="url-note">Only direct video file URLs (.mp4, .webm, .ogg) are supported</p>
+          </div>
+          
+          <!-- Recent Videos -->
+          <div id="recent-videos" class="recent-videos" hidden>
+            <h2 class="section-title">Recent Videos</h2>
+            <div class="recent-grid" id="recent-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Watch View -->
+      <section id="watch-view" class="view watch-view" hidden>
+        <div class="watch-layout">
+          <!-- Player Column -->
+          <div class="player-column">
+            <div class="player-wrapper" id="player-wrapper">
+              <video 
+                id="video-player" 
+                class="video-player"
+                playsinline
+                preload="metadata"
+                aria-label="Video player"
+              ></video>
+              
+              <!-- Custom Controls Overlay -->
+              <div class="player-controls" id="player-controls" role="toolbar" aria-label="Video controls">
+                <!-- Progress Bar -->
+                <div class="progress-container" id="progress-container">
+                  <div class="progress-bar" id="progress-bar">
+                    <div class="progress-buffered" id="progress-buffered"></div>
+                    <div class="progress-played" id="progress-played"></div>
+                    <div class="progress-thumb" id="progress-thumb"></div>
+                  </div>
+                  <div class="progress-tooltip" id="progress-tooltip">0:00</div>
+                </div>
+                
+                <div class="controls-row">
+                  <div class="controls-left">
+                    <button class="control-btn" id="play-btn" aria-label="Play">
+                      <svg class="icon icon-play" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+                      <svg class="icon icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </button>
+                    
+                    <button class="control-btn" id="skip-back-btn" aria-label="Skip back 5 seconds">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                        <text x="12" y="14" font-size="6" text-anchor="middle" fill="currentColor">5</text>
+                      </svg>
+                    </button>
+                    
+                    <button class="control-btn" id="skip-forward-btn" aria-label="Skip forward 5 seconds">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
+                        <text x="12" y="14" font-size="6" text-anchor="middle" fill="currentColor">5</text>
+                      </svg>
+                    </button>
+                    
+                    <div class="volume-control">
+                      <button class="control-btn" id="mute-btn" aria-label="Mute">
+                        <svg class="icon icon-volume" viewBox="0 0 24 24">
+                          <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>
+                          <path class="volume-waves" d="M14,8.5 a5,5 0 0 1 0,7 M17,5 a9,9 0 0 1 0,14"/>
+                        </svg>
+                        <svg class="icon icon-muted" viewBox="0 0 24 24">
+                          <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/>
+                          <line x1="23" y1="9" x2="17" y2="15"/>
+                          <line x1="17" y1="9" x2="23" y2="15"/>
+                        </svg>
+                      </button>
+                      <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+                    </div>
+                    
+                    <span class="time-display" id="time-display">0:00 / 0:00</span>
+                  </div>
+                  
+                  <div class="controls-right">
+                    <button class="control-btn" id="settings-btn" aria-label="Settings" aria-haspopup="menu">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                      </svg>
+                    </button>
+                    
+                    <button class="control-btn" id="theater-btn" aria-label="Theater mode">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                    </button>
+                    
+                    <button class="control-btn" id="fullscreen-btn" aria-label="Fullscreen">
+                      <svg class="icon icon-expand" viewBox="0 0 24 24">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                      </svg>
+                      <svg class="icon icon-compress" viewBox="0 0 24 24">
+                        <path d="M4 14h6v6m10-10h-6V4m0 6 7-7M3 21l7-7"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Settings Menu -->
+              <div class="settings-menu" id="settings-menu" role="menu" hidden>
+                <div class="settings-section">
+                  <h3 class="settings-title">Playback Speed</h3>
+                  <div class="speed-options" role="radiogroup" aria-label="Playback speed">
+                    <button class="speed-btn" data-speed="0.5" role="radio" aria-checked="false">0.5x</button>
+                    <button class="speed-btn" data-speed="0.75" role="radio" aria-checked="false">0.75x</button>
+                    <button class="speed-btn active" data-speed="1" role="radio" aria-checked="true">1x</button>
+                    <button class="speed-btn" data-speed="1.25" role="radio" aria-checked="false">1.25x</button>
+                    <button class="speed-btn" data-speed="1.5" role="radio" aria-checked="false">1.5x</button>
+                    <button class="speed-btn" data-speed="2" role="radio" aria-checked="false">2x</button>
+                  </div>
+                </div>
+                
+                <div class="settings-section">
+                  <h3 class="settings-title">Audio Processing</h3>
+                  <div class="audio-presets">
+                    <button class="preset-btn active" data-preset="off" aria-pressed="true">Off</button>
+                    <button class="preset-btn" data-preset="speech" aria-pressed="false">Speech Focus</button>
+                    <button class="preset-btn" data-preset="music-reduce" aria-pressed="false">Music Soften</button>
+                  </div>
+                  
+                  <div class="slider-group" id="reduction-slider-group" hidden>
+                    <label for="reduction-strength">Reduction Strength</label>
+                    <input type="range" id="reduction-strength" min="0" max="100" value="50" aria-label="Music reduction strength">
+                    <span id="reduction-value">50%</span>
+                  </div>
+                  
+                  <div class="ab-toggle-group">
+                    <span class="ab-label">A/B Compare:</span>
+                    <button class="ab-btn" id="ab-toggle" aria-pressed="false">
+                      <span class="ab-original">Original</span>
+                      <span class="ab-processed">Processed</span>
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="settings-section">
+                  <h3 class="settings-title">Video Info</h3>
+                  <div class="video-stats" id="video-stats">
+                    <div class="stat"><span class="stat-label">Resolution:</span><span id="stat-resolution">--</span></div>
+                    <div class="stat"><span class="stat-label">Duration:</span><span id="stat-duration">--</span></div>
+                    <div class="stat"><span class="stat-label">File Size:</span><span id="stat-size">--</span></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Big Play Button -->
+              <button class="big-play-btn" id="big-play-btn" aria-label="Play video">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                  <circle cx="32" cy="32" r="30" fill="rgba(0,0,0,0.6)"/>
+                  <polygon points="26,20 26,44 46,32" fill="white"/>
+                </svg>
+              </button>
+              
+              <!-- Loading Spinner -->
+              <div class="player-loading" id="player-loading" hidden>
+                <div class="spinner"></div>
+              </div>
+            </div>
+            
+            <!-- Video Info -->
+            <div class="video-info">
+              <h1 class="video-title" id="video-title">
+                <span class="skeleton skeleton-text"></span>
+              </h1>
+              
+              <div class="video-meta-row">
+                <div class="channel-info">
+                  <div class="channel-avatar">
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                      <circle cx="16" cy="12" r="6" fill="currentColor"/>
+                      <path d="M16 20c-6 0-10 4-10 8h20c0-4-4-8-10-8z" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  <div class="channel-details">
+                    <span class="channel-name">Your Video</span>
+                    <span class="channel-sub">Local Upload</span>
+                  </div>
+                </div>
+                
+                <div class="action-buttons">
+                  <button class="action-btn" id="like-btn" aria-label="Like">
+                    <svg class="icon" viewBox="0 0 24 24">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                    </svg>
+                    <span>Like</span>
+                  </button>
+                  
+                  <button class="action-btn" id="share-btn" aria-label="Share">
+                    <svg class="icon" viewBox="0 0 24 24">
+                      <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    <span>Share</span>
+                  </button>
+                  
+                  <div class="download-dropdown" id="download-dropdown">
+                    <button class="action-btn action-btn-primary" id="download-btn" aria-haspopup="menu" aria-expanded="false">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                      </svg>
+                      <span>Download</span>
+                      <svg class="icon icon-chevron" viewBox="0 0 24 24">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </button>
+                    
+                    <div class="dropdown-menu" id="download-menu" role="menu" hidden>
+                      <button class="dropdown-item" id="download-original" role="menuitem">
+                        <svg class="icon" viewBox="0 0 24 24">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/>
+                          <polygon points="10,8 10,16 16,12"/>
+                        </svg>
+                        <div class="dropdown-item-text">
+                          <span class="dropdown-item-title">Download Original</span>
+                          <span class="dropdown-item-desc">Unmodified video file</span>
+                        </div>
+                      </button>
+                      
+                      <button class="dropdown-item" id="download-audio" role="menuitem">
+                        <svg class="icon" viewBox="0 0 24 24">
+                          <path d="M9 18V5l12-2v13"/>
+                          <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                        </svg>
+                        <div class="dropdown-item-text">
+                          <span class="dropdown-item-title">Export Processed Audio (WAV)</span>
+                          <span class="dropdown-item-desc">Music-reduced audio track</span>
+                        </div>
+                      </button>
+                      
+                      <button class="dropdown-item" id="download-video" role="menuitem">
+                        <svg class="icon" viewBox="0 0 24 24">
+                          <rect x="2" y="4" width="20" height="16" rx="2"/>
+                          <path d="M10 9l5 3-5 3V9z"/>
+                        </svg>
+                        <div class="dropdown-item-text">
+                          <span class="dropdown-item-title">Export Processed Video (MP4)</span>
+                          <span class="dropdown-item-desc">Requires ffmpeg.wasm (lazy-loaded)</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Description Accordion -->
+              <details class="description-accordion" id="description-accordion">
+                <summary class="description-header">
+                  <div class="description-preview">
+                    <span id="video-stats-preview">--</span>
+                  </div>
+                  <span class="description-toggle">Show more</span>
+                </summary>
+                <div class="description-content" id="description-content">
+                  <p>This is your uploaded video. Use the audio processing controls to reduce background music and enhance speech clarity.</p>
+                  <div class="description-timestamps" id="description-timestamps"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+          
+          <!-- Sidebar - Up Next -->
+          <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+              <h2 class="sidebar-title">Timestamps</h2>
+              <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="upnext-list" id="upnext-list" role="list">
+              <!-- Skeleton loaders -->
+              <div class="upnext-item skeleton-item">
+                <div class="skeleton skeleton-thumb"></div>
+                <div class="skeleton-text-group">
+                  <div class="skeleton skeleton-text"></div>
+                  <div class="skeleton skeleton-text short"></div>
+                </div>
+              </div>
+              <div class="upnext-item skeleton-item">
+                <div class="skeleton skeleton-thumb"></div>
+                <div class="skeleton-text-group">
+                  <div class="skeleton skeleton-text"></div>
+                  <div class="skeleton skeleton-text short"></div>
+                </div>
+              </div>
+              <div class="upnext-item skeleton-item">
+                <div class="skeleton skeleton-thumb"></div>
+                <div class="skeleton-text-group">
+                  <div class="skeleton skeleton-text"></div>
+                  <div class="skeleton skeleton-text short"></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container" role="alert" aria-live="polite"></div>
+    
+    <!-- Export Progress Modal -->
+    <div class="modal-overlay" id="export-modal" hidden>
+      <div class="modal" role="dialog" aria-labelledby="export-modal-title" aria-modal="true">
+        <h2 id="export-modal-title" class="modal-title">Exporting Video</h2>
+        <div class="export-progress">
+          <div class="progress-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="progress-ring-bg" cx="50" cy="50" r="45"/>
+              <circle class="progress-ring-fill" id="export-progress-ring" cx="50" cy="50" r="45"/>
+            </svg>
+            <span class="progress-percent" id="export-percent">0%</span>
+          </div>
+          <p class="export-status" id="export-status">Initializing ffmpeg.wasm...</p>
+        </div>
+        <button class="btn btn-secondary" id="export-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
