@@ -1,0 +1,109 @@
+You are a senior full stack engineer and UI designer. Write production-quality, well-structured code with a polished, responsive interface.
+
+Build a STATIC web app (must run on GitHub Pages) that looks and feels like YouTube (layout and interactions), but is an original design and does not copy any YouTube logos, icons, or trademarks. The app is for USER-OWNED videos only. Do NOT implement support for extracting videos from YouTube or any third-party streaming site. If a user pastes a link, it must only work for direct video file URLs they own (mp4/webm/ogg) and must gracefully handle CORS failures.
+
+Core features:
+1) Input modes (top of page, like a “search bar” area):
+   - Upload a local video file (primary flow)
+   - Paste a direct video URL (secondary flow, only direct file URLs)
+2) Video watch page that is a faithful “watch experience” replica in UX:
+   - Large main player centered with theater mode feel
+   - Title, channel-like row (generic “Uploader”), subscribe button (non-functional UI), like/share buttons (UI only)
+   - A right-side “Up next” list with thumbnails generated from the video (client-side) and clickable to jump to timestamps
+   - Under the player: description accordion, chapters/timestamps list, and “stats” row (duration, resolution, file size)
+   - Keyboard shortcuts: space play/pause, left/right 5s seek, up/down volume
+   - Mobile: player at top, then title/actions, then “Up next” collapsible drawer
+3) Download options:
+   - Download Original (always available)
+   - Download “Reduced Music” (only for user-owned content; explain it is best-effort in static mode)
+4) Music reduction:
+   - STATIC MODE (GitHub Pages compatible): implement a best-effort “Reduce background music” processing pipeline in-browser.
+     Constraints: do not claim perfect music removal. Implement something real and honest:
+       - Use Web Audio API to apply dynamic range ducking + EQ preset toggles:
+         a) “Speech focus” preset: band-pass focus around typical speech range, gentle low cut, gentle high cut
+         b) “Music soften” preset: reduce bass + reduce highs modestly, keep mids
+       - Provide a slider “Music reduction strength” that adjusts filter and compressor settings
+       - Provide A/B toggle: Original vs Processed
+       - Provide “Export Processed Audio Track (WAV)” and “Export Processed Video (MP4)”:
+         - For exporting processed video on GitHub Pages, use ffmpeg.wasm.
+         - If ffmpeg.wasm is too heavy, still export WAV and clearly label “Processed video export requires ffmpeg.wasm; included and lazy-loaded.”
+   - OPTIONAL TRUE SEPARATION MODE (not for GitHub Pages by default): create a documented stub API integration:
+       POST /api/separate { videoFile } -> returns { vocalUrl, otherUrl, recombinedUrl }
+     Add a README section describing how to run a local backend using Python + Demucs to do real source separation. Do not implement a deployed backend by default, but include minimal backend code in /server as optional.
+
+Non-negotiable constraints:
+- Must be a single-page app with hash routing (#/watch) so GitHub Pages works.
+- No external paid services.
+- No copyrighted assets.
+- No YouTube scraping, no yt-dlp, no “remove music from YouTube links” support.
+- Must be robust on mobile Safari and Chrome.
+- Must handle large files gracefully with progress UI.
+- Accessibility: proper focus states, ARIA labels for controls, reduced motion support.
+
+Frontend aesthetics requirements (avoid “AI slop”):
+- Typography: pick a distinctive font pairing (NOT Inter/Roboto/Arial/system). Use 2 fonts max. Self-host via /assets/fonts with WOFF2, and include a fallback stack.
+- Color & theme: commit hard to a cohesive aesthetic. Use CSS variables. Prefer a dark theme that feels like a premium media product (inspired by pro video tools or arcade UI), with sharp accent colors. Add a theme toggle that actually changes variables (dark and light), but default to the best-looking theme.
+- Motion: orchestrate one high-impact page load animation with staggered reveals. Use CSS-only animations. Micro-interactions for buttons, hover states, and list item selection. Respect prefers-reduced-motion.
+- Backgrounds: create depth using layered gradients + subtle noise (CSS) + a geometric pattern. No cliché purple-on-white gradient look.
+
+Tech choices:
+- Use plain HTML/CSS/JS (no framework) to keep GitHub Pages simple.
+- Use modern ES modules.
+- Use ffmpeg.wasm only when user clicks Export Processed Video. Lazy load it and show an informative loading UI.
+- Generate thumbnails client-side by drawing video frames to canvas at intervals (for the “Up next” list).
+- Store recent videos metadata in localStorage (title, last position, generated thumbnails data URLs optionally capped).
+
+Deliverables:
+- Create a clean repo structure:
+  /index.html
+  /styles.css
+  /app.js
+  /modules/
+    router.js
+    player.js
+    thumbnails.js
+    audiofx.js
+    export.js
+    ui.js
+  /assets/
+    /icons (original icons you create as SVG)
+    /fonts (WOFF2 files, include licenses or use OFL fonts)
+  /README.md
+
+Implementation details:
+- The top “input bar” accepts:
+  - file input
+  - URL input with validation (must end in .mp4/.webm/.ogg or have a video MIME type via HEAD fetch; if HEAD blocked by CORS, show a helpful message and suggest upload instead)
+- Watch view:
+  - Player uses <video> with custom controls overlay (play, timeline, volume, settings, theater)
+  - Settings menu includes: playback speed, quality info (read from video), audio processing presets, A/B toggle
+- “Reduced Music” mode must be implemented using Web Audio API:
+  - Create MediaElementAudioSourceNode from the video element
+  - Apply BiquadFilterNodes and DynamicsCompressorNode
+  - Route to destination and allow bypass
+  - For WAV export: record processed audio via MediaStreamDestination + MediaRecorder (fallback if unsupported)
+- For processed video export:
+  - Extract audio (original) + processed WAV
+  - Mux video stream with processed audio using ffmpeg.wasm
+  - Show progress and estimate based on ffmpeg logs
+  - If export fails, fall back to audio-only download and explain why
+
+UI polish:
+- Make the main subject the video itself: large player, subtle chrome.
+- Use skeleton loading for thumbnail list and metadata.
+- Show file size, duration, and resolution once metadata is loaded.
+- Add a “Download” dropdown with both options.
+- Remove any “vote” or redundant buttons. Keep it clean like a real watch page.
+
+Testing checklist (do these manually but ensure code supports them):
+- iPhone Safari: upload, play, scrub, full screen, theater toggle behavior, audio processing toggle
+- Android Chrome: same
+- Desktop Chrome: export WAV, export video (ffmpeg) lazy load, hash routing refresh on #/watch
+- Error cases: unsupported format, CORS blocked URL, huge file memory issues (show guidance)
+
+Output:
+- Provide the full code for all files.
+- Ensure it runs by opening index.html via a simple static server (document in README).
+- Add GitHub Pages instructions in README.
+
+Start now and build the complete project in one pass.
